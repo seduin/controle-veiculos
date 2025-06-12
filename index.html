@@ -60,10 +60,11 @@
       font-weight: bold;
       margin-top: 10px;
     }
-    #saldo {
-      text-align: right;
-      font-size: 14px;
-      margin-bottom: 10px;
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      padding: 10px;
     }
   </style>
 </head>
@@ -74,7 +75,6 @@
   </header>
   <main>
     <h2>Formulário de Registro</h2>
-
     <label for="servidor">Servidor</label>
     <select id="servidor">
       <option value="">Carregando...</option>
@@ -92,7 +92,7 @@
     <select id="veiculo">
       <option value="">Selecione a ação primeiro...</option>
     </select>
-    <div id="saldo"></div>
+    <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
 
     <div id="campoObservacao">
       <label for="observacao">Observação</label>
@@ -107,6 +107,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
+  <footer>Desenvolvido por Tiago Nielson - v.3.0</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
@@ -116,22 +117,20 @@
     const obsDiv = document.getElementById("campoObservacao");
     const kmDiv = document.getElementById("campoKM");
     const feedbackDiv = document.getElementById("feedback");
-
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyuBew24aTfLVUDgfKqnRY0XM6BdbB8JBDHl1sNH3oLpDhos6AHy8mbwyOGCxiMZICGXQ/exec";
 
     let servidores = [];
     let veiculos = [];
+    let registros = [];
 
-    function carregarDados() {
-      fetch(WEBAPP_URL + "?getDados=1")
-        .then(r => r.json())
-        .then(d => {
-          servidores = d.servidores;
-          veiculos = d.veiculos;
-          preencherServidores();
-          configurarEventos();
-        });
-    }
+    fetch(WEBAPP_URL + "?getDados=1")
+      .then(r => r.json())
+      .then(d => {
+        servidores = d.servidores;
+        veiculos = d.veiculos;
+        registros = d.registros || [];
+        preencherServidores();
+      });
 
     function preencherServidores() {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
@@ -144,25 +143,23 @@
     }
 
     servidorSelect.addEventListener("change", () => {
-      const nome = servidorSelect.value;
-      const vinculo = veiculos.find(v => v.ultimoServidor === nome && !v.disponivel);
-      if (vinculo) {
-        acaoSelect.innerHTML = `<option value="Retorno">Retorno</option>`;
-        veiculoSelect.innerHTML = `<option value="${vinculo.nome}">${vinculo.nome} (${vinculo.saldo})</option>`;
-        saldoDiv.textContent = `Saldo: ${vinculo.saldo}`;
-        obsDiv.style.display = "none";
-        kmDiv.style.display = "block";
+      const servidor = servidorSelect.value;
+      const reg = [...registros].reverse().find(r => r[0] === servidor && r[1] === "Saída");
+      if (reg) {
+        acaoSelect.value = "Retorno";
+        acaoSelect.dispatchEvent(new Event("change"));
+        setTimeout(() => {
+          const opt = [...veiculoSelect.options].find(o => o.value.includes(reg[2]));
+          if (opt) {
+            veiculoSelect.value = opt.value;
+            veiculoSelect.dispatchEvent(new Event("change"));
+          }
+        }, 300);
+        [...acaoSelect.options].forEach(o => {
+          if (o.value === "Saída") o.disabled = true;
+        });
       } else {
-        acaoSelect.innerHTML = `
-          <option value="">Selecione...</option>
-          <option value="Saída">Saída</option>
-          <option value="Retorno">Retorno</option>
-          <option value="Lavação">Lavação</option>
-        `;
-        veiculoSelect.innerHTML = `<option value="">Selecione a ação primeiro...</option>`;
-        saldoDiv.textContent = "";
-        kmDiv.style.display = "none";
-        obsDiv.style.display = "block";
+        [...acaoSelect.options].forEach(o => o.disabled = false);
       }
     });
 
@@ -191,7 +188,7 @@
       saldoDiv.textContent = v ? `Saldo: ${v.saldo}` : "";
     });
 
-    async function enviar() {
+    function enviar() {
       const servidor = servidorSelect.value;
       const acao = acaoSelect.value;
       const veiculo = veiculoSelect.value;
@@ -203,26 +200,25 @@
         feedbackDiv.style.color = "red";
         return;
       }
-
       if (acao === "Retorno") {
         if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
         }
-
-        const resposta = await fetch(`${WEBAPP_URL}?placaKM=${veiculo.split(" - ")[1]}`);
-        const dados = await resposta.json();
-        const ultima = Number(dados.ultimaKM || 0);
-        const atual = Number(km);
-
-        if (atual < ultima) {
-          alert("Você só andou de ré? A KM está abaixo da última registrada. Verifique!");
-          return;
-        }
-        if (atual - ultima > 500) {
-          alert("Por toda Joinville? Você andou mais de 500km? Verifique!");
-          return;
+        const ult = [...registros].reverse().find(r => r[2] === veiculo);
+        if (ult) {
+          const ultKM = parseFloat(ult[3].replace(/\D/g, ""));
+          const kmAtual = parseFloat(km);
+          const diff = kmAtual - ultKM;
+          if (diff < 0) {
+            alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
+            return;
+          }
+          if (diff > 500) {
+            alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
+            return;
+          }
         }
       }
 
@@ -246,7 +242,14 @@
           document.getElementById("observacao").value = "";
           document.getElementById("km").value = "";
           saldoDiv.textContent = "";
-          carregarDados(); // <- RECARREGA VEÍCULOS
+          fetch(WEBAPP_URL + "?getDados=1")
+            .then(r => r.json())
+            .then(d => {
+              servidores = d.servidores;
+              veiculos = d.veiculos;
+              registros = d.registros || [];
+              preencherServidores();
+            });
         } else {
           feedbackDiv.textContent = "Erro ao enviar.";
           feedbackDiv.style.color = "red";
@@ -256,25 +259,6 @@
         feedbackDiv.style.color = "red";
       });
     }
-
-    function configurarEventos() {
-      // Adiciona os eventos necessários após carregar os dados
-    }
-
-    carregarDados(); // inicia tudo
   </script>
-    <footer class="rodape">
-    Desenvolvido por Tiago Nielson – v.3.0
-  </footer>
-
-  <style>
-    .rodape {
-      text-align: center;
-      font-size: 12px;
-      color: #999;
-      margin: 30px 0 10px 0;
-    }
-  </style>
-
 </body>
 </html>
