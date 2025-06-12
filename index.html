@@ -61,16 +61,17 @@
       margin-top: 10px;
     }
     #filtros {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 6px;
+      text-align: center;
       margin: 10px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
     }
     #filtros button {
       background: #ccc;
       border: none;
-      padding: 6px 10px;
+      padding: 5px 10px;
       cursor: pointer;
       border-radius: 4px;
     }
@@ -141,22 +142,6 @@
         preencherServidores();
       });
 
-    function construirFiltroServidores() {
-      const grupos = [
-        { label: "A–E", range: ["A", "E"] },
-        { label: "F–O", range: ["F", "O"] },
-        { label: "P–Z", range: ["P", "Z"] },
-        { label: "Todos", range: null }
-      ];
-      filtrosDiv.innerHTML = "";
-      grupos.forEach(g => {
-        const btn = document.createElement("button");
-        btn.textContent = g.label;
-        btn.onclick = () => preencherServidores(g.range);
-        filtrosDiv.appendChild(btn);
-      });
-    }
-
     function preencherServidores(filtro = null) {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
       const filtrados = filtro
@@ -170,6 +155,22 @@
         opt.value = nome;
         opt.textContent = nome;
         servidorSelect.appendChild(opt);
+      });
+    }
+
+    function construirFiltroServidores() {
+      const grupos = [
+        { label: "A–E", range: ["A", "E"] },
+        { label: "F–O", range: ["F", "O"] },
+        { label: "P–Z", range: ["P", "Z"] },
+        { label: "Todos", range: null }
+      ];
+      filtrosDiv.innerHTML = "";
+      grupos.forEach(g => {
+        const btn = document.createElement("button");
+        btn.textContent = g.label;
+        btn.onclick = () => preencherServidores(g.range);
+        filtrosDiv.appendChild(btn);
       });
     }
 
