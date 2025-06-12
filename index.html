@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -45,6 +44,7 @@
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
+      box-sizing: border-box;
     }
     button {
       width: 100%;
@@ -108,7 +108,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.0</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.01</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
@@ -123,6 +123,7 @@
     let servidores = [];
     let veiculos = [];
     let registros = [];
+    let servidorComCarro = {};
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
@@ -130,6 +131,7 @@
         servidores = d.servidores;
         veiculos = d.veiculos;
         registros = d.registros || [];
+        servidorComCarro = d.servidorComCarro || {};
         preencherServidores();
       });
 
@@ -145,12 +147,12 @@
 
     servidorSelect.addEventListener("change", () => {
       const servidor = servidorSelect.value;
-      const reg = [...registros].reverse().find(r => r[0] === servidor && r[1] === "Saída");
-      if (reg) {
+      const veiculoAnterior = servidorComCarro[servidor];
+      if (veiculoAnterior) {
         acaoSelect.value = "Retorno";
         acaoSelect.dispatchEvent(new Event("change"));
         setTimeout(() => {
-          const opt = [...veiculoSelect.options].find(o => o.value.includes(reg[2]));
+          const opt = [...veiculoSelect.options].find(o => o.value.includes(veiculoAnterior));
           if (opt) {
             veiculoSelect.value = opt.value;
             veiculoSelect.dispatchEvent(new Event("change"));
@@ -201,28 +203,24 @@
         feedbackDiv.style.color = "red";
         return;
       }
-
       if (acao === "Retorno") {
         if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
         }
-
-        const ult = [...registros].reverse().find(r => r[2] === veiculo && r[1] === "Saída");
+        const ult = [...registros].reverse().find(r => r[2] === veiculo);
         if (ult) {
-          const ultKM = parseFloat(ult[3].replace(/[^\d]/g, ""));
+          const ultKM = parseFloat(ult[3].replace(/\D/g, ""));
           const kmAtual = parseFloat(km);
-          if (!isNaN(ultKM) && !isNaN(kmAtual)) {
-            const diff = kmAtual - ultKM;
-            if (diff < 0) {
-              alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
-              return;
-            }
-            if (diff > 500) {
-              alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
-              return;
-            }
+          const diff = kmAtual - ultKM;
+          if (diff < 0) {
+            alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
+            return;
+          }
+          if (diff > 500) {
+            alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
+            return;
           }
         }
       }
@@ -253,6 +251,7 @@
               servidores = d.servidores;
               veiculos = d.veiculos;
               registros = d.registros || [];
+              servidorComCarro = d.servidorComCarro || {};
               preencherServidores();
             });
         } else {
