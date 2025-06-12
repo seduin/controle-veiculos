@@ -60,31 +60,17 @@
       font-weight: bold;
       margin-top: 10px;
     }
-    #filtros {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 10px 0;
-    }
-    #filtros button {
-      background: #ccc;
-      border: none;
-      padding: 6px 10px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
   </style>
 </head>
 <body>
   <header>
-    <mg src="https://raw.githubusercontent.com/seduin/controle-veiculos/main/Logotipo_Prefeitura_horizontal_negativo.png" alt="Prefeitura de Joinville">
+    <img src="https://raw.githubusercontent.com/seduin/controle-veiculos/main/Logotipo_Prefeitura_horizontal_positivo.png" alt="Prefeitura de Joinville">
     <h1>Controle de Veículos</h1>
   </header>
   <main>
     <h2>Formulário de Registro</h2>
+
     <label for="servidor">Servidor</label>
-    <div id="filtros"></div>
     <select id="servidor">
       <option value="">Carregando...</option>
     </select>
@@ -125,49 +111,23 @@
     const obsDiv = document.getElementById("campoObservacao");
     const kmDiv = document.getElementById("campoKM");
     const feedbackDiv = document.getElementById("feedback");
-    const filtrosDiv = document.getElementById("filtros");
 
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyuBew24aTfLVUDgfKqnRY0XM6BdbB8JBDHl1sNH3oLpDhos6AHy8mbwyOGCxiMZICGXQ/exec";
 
     let servidores = [];
     let veiculos = [];
-    let servidorComCarro = {};
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
       .then(d => {
         servidores = d.servidores;
         veiculos = d.veiculos;
-        servidorComCarro = d.servidorComCarro;
-        criarFiltros();
         preencherServidores();
       });
 
-    function criarFiltros() {
-      const grupos = [
-        { label: "A–E", range: ["A", "E"] },
-        { label: "F–O", range: ["F", "O"] },
-        { label: "P–Z", range: ["P", "Z"] },
-        { label: "Todos", range: null }
-      ];
-      filtrosDiv.innerHTML = "";
-      grupos.forEach(g => {
-        const btn = document.createElement("button");
-        btn.textContent = g.label;
-        btn.onclick = () => preencherServidores(g.range);
-        filtrosDiv.appendChild(btn);
-      });
-    }
-
-    function preencherServidores(filtro = null) {
+    function preencherServidores() {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
-      const filtrados = filtro
-        ? servidores.filter(s => {
-            const letra = s[0].toUpperCase();
-            return letra >= filtro[0] && letra <= filtro[1];
-          })
-        : servidores;
-      filtrados.forEach(nome => {
+      servidores.forEach(nome => {
         const opt = document.createElement("option");
         opt.value = nome;
         opt.textContent = nome;
@@ -177,25 +137,14 @@
 
     servidorSelect.addEventListener("change", () => {
       const nome = servidorSelect.value;
-      const veiculoAtual = servidorComCarro[nome];
-      if (veiculoAtual) {
+      const veiculoDoServidor = veiculos.find(v => v.ultimoServidor === nome && !v.disponivel);
+      if (veiculoDoServidor) {
         acaoSelect.value = "Retorno";
-        obsDiv.style.display = "none";
-        kmDiv.style.display = "block";
-        veiculoSelect.innerHTML = `<option value="">Selecione...</option>`;
-        const opt = document.createElement("option");
-        opt.value = veiculoAtual;
-        opt.textContent = veiculoAtual;
-        veiculoSelect.appendChild(opt);
-        veiculoSelect.value = veiculoAtual;
-        const v = veiculos.find(v => v.nome === veiculoAtual);
-        saldoDiv.textContent = v ? `Saldo: ${v.saldo}` : "";
-      } else {
-        acaoSelect.value = "";
-        veiculoSelect.innerHTML = `<option value="">Selecione a ação primeiro...</option>`;
-        saldoDiv.textContent = "";
-        obsDiv.style.display = "none";
-        kmDiv.style.display = "none";
+        acaoSelect.dispatchEvent(new Event("change"));
+        setTimeout(() => {
+          veiculoSelect.value = veiculoDoServidor.nome;
+          veiculoSelect.dispatchEvent(new Event("change"));
+        }, 100);
       }
     });
 
@@ -229,17 +178,31 @@
       const acao = acaoSelect.value;
       const veiculo = veiculoSelect.value;
       const observacao = document.getElementById("observacao").value;
-      const km = document.getElementById("km").value;
+      const km = parseFloat(document.getElementById("km").value);
 
       if (!servidor || !acao || !veiculo) {
         feedbackDiv.textContent = "Preencha todos os campos obrigatórios.";
         feedbackDiv.style.color = "red";
         return;
       }
-      if (acao === "Retorno" && !km) {
-        feedbackDiv.textContent = "Informe o KM na volta.";
-        feedbackDiv.style.color = "red";
-        return;
+      if (acao === "Retorno") {
+        const v = veiculos.find(v => v.nome === veiculo);
+        const ultimaKM = parseFloat(v?.ultimoKM || 0);
+        if (isNaN(km)) {
+          feedbackDiv.textContent = "Informe o KM na volta.";
+          feedbackDiv.style.color = "red";
+          return;
+        }
+        if (km < ultimaKM) {
+          feedbackDiv.textContent = `KM inválido: menor que o último registrado (${ultimaKM}).`;
+          feedbackDiv.style.color = "red";
+          return;
+        }
+        if (km - ultimaKM > 500) {
+          feedbackDiv.textContent = `KM inválido: diferença maior que 500km.`;
+          feedbackDiv.style.color = "red";
+          return;
+        }
       }
 
       const data = new URLSearchParams();
@@ -247,7 +210,7 @@
       data.append("acao", acao);
       data.append("veiculo", veiculo);
       data.append("observacao", observacao);
-      data.append("km", km);
+      data.append("km", km || "");
 
       fetch(WEBAPP_URL, {
         method: "POST",
