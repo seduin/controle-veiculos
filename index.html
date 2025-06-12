@@ -60,34 +60,19 @@
       font-weight: bold;
       margin-top: 10px;
     }
-
-    /* Correção: Filtros lado a lado */
     #filtros {
-      display: flex !important;
-      justify-content: center !important;
-      gap: 8px !important;
-      flex-wrap: wrap !important;
-      margin: 12px 0 !important;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
     }
-
     #filtros button {
-      background: #ccc !important;
-      border: none !important;
-      padding: 6px 14px !important;
-      cursor: pointer !important;
-      border-radius: 5px !important;
-      font-size: 14px !important;
-      white-space: nowrap !important;
-    }
-
-    #filtros button:hover {
-      background-color: #bbb !important;
-    }
-
-    #saldo {
-      text-align: right;
-      font-size: 14px;
-      margin-bottom: 10px;
+      background: #ccc;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -98,7 +83,6 @@
   </header>
   <main>
     <h2>Formulário de Registro</h2>
-
     <label for="servidor">Servidor</label>
     <div id="filtros"></div>
     <select id="servidor">
@@ -117,7 +101,7 @@
     <select id="veiculo">
       <option value="">Selecione a ação primeiro...</option>
     </select>
-    <div id="saldo"></div>
+    <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
 
     <div id="campoObservacao">
       <label for="observacao">Observação</label>
@@ -147,14 +131,33 @@
 
     let servidores = [];
     let veiculos = [];
+    let servidorComCarro = {};
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
       .then(d => {
         servidores = d.servidores;
         veiculos = d.veiculos;
+        servidorComCarro = d.servidorComCarro;
+        criarFiltros();
         preencherServidores();
       });
+
+    function criarFiltros() {
+      const grupos = [
+        { label: "A–E", range: ["A", "E"] },
+        { label: "F–O", range: ["F", "O"] },
+        { label: "P–Z", range: ["P", "Z"] },
+        { label: "Todos", range: null }
+      ];
+      filtrosDiv.innerHTML = "";
+      grupos.forEach(g => {
+        const btn = document.createElement("button");
+        btn.textContent = g.label;
+        btn.onclick = () => preencherServidores(g.range);
+        filtrosDiv.appendChild(btn);
+      });
+    }
 
     function preencherServidores(filtro = null) {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
@@ -172,20 +175,28 @@
       });
     }
 
-    const grupos = [
-      { label: "A–E", range: ["A", "E"] },
-      { label: "F–O", range: ["F", "O"] },
-      { label: "P–Z", range: ["P", "Z"] },
-      { label: "Todos", range: null }
-    ];
-
-    grupos.forEach(g => {
-      const btn = document.createElement("button");
-      btn.textContent = g.label;
-      btn.onclick = () => {
-        preencherServidores(g.range);
-      };
-      filtrosDiv.appendChild(btn);
+    servidorSelect.addEventListener("change", () => {
+      const nome = servidorSelect.value;
+      const veiculoAtual = servidorComCarro[nome];
+      if (veiculoAtual) {
+        acaoSelect.value = "Retorno";
+        obsDiv.style.display = "none";
+        kmDiv.style.display = "block";
+        veiculoSelect.innerHTML = `<option value="">Selecione...</option>`;
+        const opt = document.createElement("option");
+        opt.value = veiculoAtual;
+        opt.textContent = veiculoAtual;
+        veiculoSelect.appendChild(opt);
+        veiculoSelect.value = veiculoAtual;
+        const v = veiculos.find(v => v.nome === veiculoAtual);
+        saldoDiv.textContent = v ? `Saldo: ${v.saldo}` : "";
+      } else {
+        acaoSelect.value = "";
+        veiculoSelect.innerHTML = `<option value="">Selecione a ação primeiro...</option>`;
+        saldoDiv.textContent = "";
+        obsDiv.style.display = "none";
+        kmDiv.style.display = "none";
+      }
     });
 
     acaoSelect.addEventListener("change", () => {
