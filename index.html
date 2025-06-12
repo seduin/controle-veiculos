@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -45,9 +46,6 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-    textarea {
-      resize: vertical;
-    }
     button {
       width: 100%;
       padding: 12px;
@@ -79,7 +77,9 @@
   <main>
     <h2>Formulário de Registro</h2>
     <label for="servidor">Servidor</label>
-    <select id="servidor"><option value="">Carregando...</option></select>
+    <select id="servidor">
+      <option value="">Carregando...</option>
+    </select>
 
     <label for="acao">Tipo de Ação</label>
     <select id="acao">
@@ -90,7 +90,9 @@
     </select>
 
     <label for="veiculo">Veículo</label>
-    <select id="veiculo"><option value="">Selecione a ação primeiro...</option></select>
+    <select id="veiculo">
+      <option value="">Selecione a ação primeiro...</option>
+    </select>
     <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
 
     <div id="campoObservacao">
@@ -121,14 +123,13 @@
     let servidores = [];
     let veiculos = [];
     let registros = [];
-    let servidorComCarro = {};
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
       .then(d => {
         servidores = d.servidores;
         veiculos = d.veiculos;
-        servidorComCarro = d.servidorComCarro || {};
+        registros = d.registros || [];
         preencherServidores();
       });
 
@@ -144,14 +145,14 @@
 
     servidorSelect.addEventListener("change", () => {
       const servidor = servidorSelect.value;
-      if (servidorComCarro[servidor]) {
-        const veiculo = servidorComCarro[servidor];
+      const reg = [...registros].reverse().find(r => r[0] === servidor && r[1] === "Saída");
+      if (reg) {
         acaoSelect.value = "Retorno";
         acaoSelect.dispatchEvent(new Event("change"));
         setTimeout(() => {
-          const opt = [...veiculoSelect.options].find(o => o.value === veiculo);
+          const opt = [...veiculoSelect.options].find(o => o.value.includes(reg[2]));
           if (opt) {
-            veiculoSelect.value = veiculo;
+            veiculoSelect.value = opt.value;
             veiculoSelect.dispatchEvent(new Event("change"));
           }
         }, 300);
@@ -207,6 +208,23 @@
           feedbackDiv.style.color = "red";
           return;
         }
+
+        const ult = [...registros].reverse().find(r => r[2] === veiculo && r[1] === "Saída");
+        if (ult) {
+          const ultKM = parseFloat(ult[3].replace(/[^\d]/g, ""));
+          const kmAtual = parseFloat(km);
+          if (!isNaN(ultKM) && !isNaN(kmAtual)) {
+            const diff = kmAtual - ultKM;
+            if (diff < 0) {
+              alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
+              return;
+            }
+            if (diff > 500) {
+              alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
+              return;
+            }
+          }
+        }
       }
 
       const data = new URLSearchParams();
@@ -234,7 +252,7 @@
             .then(d => {
               servidores = d.servidores;
               veiculos = d.veiculos;
-              servidorComCarro = d.servidorComCarro || {};
+              registros = d.registros || [];
               preencherServidores();
             });
         } else {
