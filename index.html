@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -44,7 +45,6 @@
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
     }
     textarea {
       resize: vertical;
@@ -153,11 +153,8 @@
         acaoSelect.value = "Retorno";
         acaoSelect.dispatchEvent(new Event("change"));
         setTimeout(() => {
-          const opt = [...veiculoSelect.options].find(o => o.value.includes(reg[2]));
-          if (opt) {
-            veiculoSelect.value = opt.value;
-            veiculoSelect.dispatchEvent(new Event("change"));
-          }
+          veiculoSelect.value = reg[2];
+          veiculoSelect.dispatchEvent(new Event("change"));
         }, 300);
         [...acaoSelect.options].forEach(o => {
           if (o.value === "Saída") o.disabled = true;
@@ -204,6 +201,7 @@
         feedbackDiv.style.color = "red";
         return;
       }
+
       if (acao === "Retorno") {
         if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
