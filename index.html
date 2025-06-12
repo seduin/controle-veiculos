@@ -60,30 +60,35 @@
       font-weight: bold;
       margin-top: 10px;
     }
-    
+
+    /* Correção: Filtros lado a lado */
     #filtros {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
+      display: flex !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      flex-wrap: wrap !important;
+      margin: 12px 0 !important;
     }
 
     #filtros button {
-      background: #ccc;
-      border: none;
-      padding: 6px 16px;
-      margin: 0;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 14px;
-      white-space: nowrap;
+      background: #ccc !important;
+      border: none !important;
+      padding: 6px 14px !important;
+      cursor: pointer !important;
+      border-radius: 5px !important;
+      font-size: 14px !important;
+      white-space: nowrap !important;
     }
 
     #filtros button:hover {
-      background-color: #bbb;
+      background-color: #bbb !important;
     }
-    
+
+    #saldo {
+      text-align: right;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -93,6 +98,7 @@
   </header>
   <main>
     <h2>Formulário de Registro</h2>
+
     <label for="servidor">Servidor</label>
     <div id="filtros"></div>
     <select id="servidor">
@@ -111,7 +117,7 @@
     <select id="veiculo">
       <option value="">Selecione a ação primeiro...</option>
     </select>
-    <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
+    <div id="saldo"></div>
 
     <div id="campoObservacao">
       <label for="observacao">Observação</label>
@@ -147,7 +153,6 @@
       .then(d => {
         servidores = d.servidores;
         veiculos = d.veiculos;
-        construirFiltroServidores();
         preencherServidores();
       });
 
@@ -167,21 +172,21 @@
       });
     }
 
-    function construirFiltroServidores() {
-      const grupos = [
-        { label: "A–E", range: ["A", "E"] },
-        { label: "F–O", range: ["F", "O"] },
-        { label: "P–Z", range: ["P", "Z"] },
-        { label: "Todos", range: null }
-      ];
-      filtrosDiv.innerHTML = "";
-      grupos.forEach(g => {
-        const btn = document.createElement("button");
-        btn.textContent = g.label;
-        btn.onclick = () => preencherServidores(g.range);
-        filtrosDiv.appendChild(btn);
-      });
-    }
+    const grupos = [
+      { label: "A–E", range: ["A", "E"] },
+      { label: "F–O", range: ["F", "O"] },
+      { label: "P–Z", range: ["P", "Z"] },
+      { label: "Todos", range: null }
+    ];
+
+    grupos.forEach(g => {
+      const btn = document.createElement("button");
+      btn.textContent = g.label;
+      btn.onclick = () => {
+        preencherServidores(g.range);
+      };
+      filtrosDiv.appendChild(btn);
+    });
 
     acaoSelect.addEventListener("change", () => {
       const tipo = acaoSelect.value;
