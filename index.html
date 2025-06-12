@@ -45,9 +45,7 @@
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
-    }
-    textarea {
-      resize: vertical;
+      box-sizing: border-box;
     }
     button {
       width: 100%;
@@ -121,20 +119,10 @@
     const obsDiv = document.getElementById("campoObservacao");
     const kmDiv = document.getElementById("campoKM");
     const feedbackDiv = document.getElementById("feedback");
+
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyuBew24aTfLVUDgfKqnRY0XM6BdbB8JBDHl1sNH3oLpDhos6AHy8mbwyOGCxiMZICGXQ/exec";
 
-    let servidores = [];
-    let veiculos = [];
-    let registros = [];
-
-    fetch(WEBAPP_URL + "?getDados=1")
-      .then(r => r.json())
-      .then(d => {
-        servidores = d.servidores;
-        veiculos = d.veiculos;
-        registros = d.registros || [];
-        preencherServidores();
-      });
+    let servidores = [], veiculos = [], registros = [];
 
     function preencherServidores() {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
@@ -146,16 +134,31 @@
       });
     }
 
+    function atualizarVeiculos(tipo) {
+      const opcoes = veiculos.filter(v =>
+        (tipo === "Saída" && v.disponivel) ||
+        (tipo === "Retorno" && !v.disponivel) ||
+        (tipo === "Lavação" && v.disponivel)
+      );
+      veiculoSelect.innerHTML = '<option value="">Selecione...</option>';
+      opcoes.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.nome;
+        opt.textContent = `${v.nome} (R$ ${parseFloat(v.saldo).toFixed(2).replace(".", ",")})`;
+        veiculoSelect.appendChild(opt);
+      });
+    }
+
     servidorSelect.addEventListener("change", () => {
       const servidor = servidorSelect.value;
       const reg = [...registros].reverse().find(r => r[0] === servidor && r[1] === "Saída");
       if (reg) {
         acaoSelect.value = "Retorno";
-        acaoSelect.dispatchEvent(new Event("change"));
+        atualizarVeiculos("Retorno");
         setTimeout(() => {
           veiculoSelect.value = reg[2];
           veiculoSelect.dispatchEvent(new Event("change"));
-        }, 300);
+        }, 200);
         [...acaoSelect.options].forEach(o => {
           if (o.value === "Saída") o.disabled = true;
         });
@@ -166,27 +169,14 @@
 
     acaoSelect.addEventListener("change", () => {
       const tipo = acaoSelect.value;
-      veiculoSelect.innerHTML = `<option value="">Carregando...</option>`;
-      const opcoes = veiculos.filter(v =>
-        (tipo === "Saída" && v.disponivel) ||
-        (tipo === "Retorno" && !v.disponivel) ||
-        (tipo === "Lavação" && v.disponivel)
-      );
-      veiculoSelect.innerHTML = `<option value="">Selecione...</option>`;
-      opcoes.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v.nome;
-        opt.textContent = `${v.nome} (${v.saldo})`;
-        veiculoSelect.appendChild(opt);
-      });
-      saldoDiv.textContent = "";
+      atualizarVeiculos(tipo);
       obsDiv.style.display = (tipo === "Saída" || tipo === "Lavação") ? "block" : "none";
       kmDiv.style.display = tipo === "Retorno" ? "block" : "none";
     });
 
     veiculoSelect.addEventListener("change", () => {
       const v = veiculos.find(v => v.nome === veiculoSelect.value);
-      saldoDiv.textContent = v ? `Saldo: ${v.saldo}` : "";
+      saldoDiv.textContent = v ? `Saldo: R$ ${parseFloat(v.saldo).toFixed(2).replace(".", ",")}` : "";
     });
 
     function enviar() {
@@ -244,14 +234,7 @@
           document.getElementById("observacao").value = "";
           document.getElementById("km").value = "";
           saldoDiv.textContent = "";
-          fetch(WEBAPP_URL + "?getDados=1")
-            .then(r => r.json())
-            .then(d => {
-              servidores = d.servidores;
-              veiculos = d.veiculos;
-              registros = d.registros || [];
-              preencherServidores();
-            });
+          carregarDados();
         } else {
           feedbackDiv.textContent = "Erro ao enviar.";
           feedbackDiv.style.color = "red";
@@ -261,6 +244,19 @@
         feedbackDiv.style.color = "red";
       });
     }
+
+    function carregarDados() {
+      fetch(WEBAPP_URL + "?getDados=1")
+        .then(r => r.json())
+        .then(d => {
+          servidores = d.servidores;
+          veiculos = d.veiculos;
+          registros = d.registros || [];
+          preencherServidores();
+        });
+    }
+
+    carregarDados();
   </script>
 </body>
 </html>
