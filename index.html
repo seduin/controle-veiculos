@@ -61,14 +61,16 @@
       margin-top: 10px;
     }
     #filtros {
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
       margin: 10px 0;
     }
     #filtros button {
       background: #ccc;
       border: none;
-      padding: 5px 10px;
-      margin: 2px;
+      padding: 6px 10px;
       cursor: pointer;
       border-radius: 4px;
     }
@@ -135,45 +137,41 @@
       .then(d => {
         servidores = d.servidores;
         veiculos = d.veiculos;
+        construirFiltroServidores();
         preencherServidores();
       });
 
+    function construirFiltroServidores() {
+      const grupos = [
+        { label: "A–E", range: ["A", "E"] },
+        { label: "F–O", range: ["F", "O"] },
+        { label: "P–Z", range: ["P", "Z"] },
+        { label: "Todos", range: null }
+      ];
+      filtrosDiv.innerHTML = "";
+      grupos.forEach(g => {
+        const btn = document.createElement("button");
+        btn.textContent = g.label;
+        btn.onclick = () => preencherServidores(g.range);
+        filtrosDiv.appendChild(btn);
+      });
+    }
+
     function preencherServidores(filtro = null) {
-  servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
-  const filtrados = filtro
-    ? servidores.filter(s => {
-        const letra = s[0].toUpperCase();
-        return letra >= filtro[0] && letra <= filtro[1];
-      })
-    : servidores;
-  filtrados.forEach(nome => {
-    const opt = document.createElement("option");
-    opt.value = nome;
-    opt.textContent = nome;
-    servidorSelect.appendChild(opt);
-  });
-}
-
-
-    const grupos = [
-  { label: "A–E", range: ["A", "E"] },
-  { label: "F–O", range: ["F", "O"] },
-  { label: "P–Z", range: ["P", "Z"] },
-  { label: "Todos", range: null }
-];
-filtrosDiv.style.display = "flex";
-filtrosDiv.style.flexWrap = "wrap";
-filtrosDiv.style.gap = "6px";
-filtrosDiv.style.justifyContent = "center";
-
-grupos.forEach(g => {
-  const btn = document.createElement("button");
-  btn.textContent = g.label;
-  btn.onclick = () => {
-    preencherServidores(g.range);
-  };
-  filtrosDiv.appendChild(btn);
-});
+      servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
+      const filtrados = filtro
+        ? servidores.filter(s => {
+            const letra = s[0].toUpperCase();
+            return letra >= filtro[0] && letra <= filtro[1];
+          })
+        : servidores;
+      filtrados.forEach(nome => {
+        const opt = document.createElement("option");
+        opt.value = nome;
+        opt.textContent = nome;
+        servidorSelect.appendChild(opt);
+      });
+    }
 
     acaoSelect.addEventListener("change", () => {
       const tipo = acaoSelect.value;
