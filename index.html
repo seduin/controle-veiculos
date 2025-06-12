@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -45,7 +44,9 @@
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
     }
     button {
       width: 100%;
@@ -78,9 +79,7 @@
   <main>
     <h2>Formulário de Registro</h2>
     <label for="servidor">Servidor</label>
-    <select id="servidor">
-      <option value="">Carregando...</option>
-    </select>
+    <select id="servidor"><option value="">Carregando...</option></select>
 
     <label for="acao">Tipo de Ação</label>
     <select id="acao">
@@ -91,9 +90,7 @@
     </select>
 
     <label for="veiculo">Veículo</label>
-    <select id="veiculo">
-      <option value="">Selecione a ação primeiro...</option>
-    </select>
+    <select id="veiculo"><option value="">Selecione a ação primeiro...</option></select>
     <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
 
     <div id="campoObservacao">
@@ -119,10 +116,21 @@
     const obsDiv = document.getElementById("campoObservacao");
     const kmDiv = document.getElementById("campoKM");
     const feedbackDiv = document.getElementById("feedback");
-
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyuBew24aTfLVUDgfKqnRY0XM6BdbB8JBDHl1sNH3oLpDhos6AHy8mbwyOGCxiMZICGXQ/exec";
 
-    let servidores = [], veiculos = [], registros = [];
+    let servidores = [];
+    let veiculos = [];
+    let registros = [];
+    let servidorComCarro = {};
+
+    fetch(WEBAPP_URL + "?getDados=1")
+      .then(r => r.json())
+      .then(d => {
+        servidores = d.servidores;
+        veiculos = d.veiculos;
+        servidorComCarro = d.servidorComCarro || {};
+        preencherServidores();
+      });
 
     function preencherServidores() {
       servidorSelect.innerHTML = `<option value="">Selecione...</option>`;
@@ -134,31 +142,19 @@
       });
     }
 
-    function atualizarVeiculos(tipo) {
-      const opcoes = veiculos.filter(v =>
-        (tipo === "Saída" && v.disponivel) ||
-        (tipo === "Retorno" && !v.disponivel) ||
-        (tipo === "Lavação" && v.disponivel)
-      );
-      veiculoSelect.innerHTML = '<option value="">Selecione...</option>';
-      opcoes.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v.nome;
-        opt.textContent = `${v.nome} (R$ ${parseFloat(v.saldo).toFixed(2).replace(".", ",")})`;
-        veiculoSelect.appendChild(opt);
-      });
-    }
-
     servidorSelect.addEventListener("change", () => {
       const servidor = servidorSelect.value;
-      const reg = [...registros].reverse().find(r => r[0] === servidor && r[1] === "Saída");
-      if (reg) {
+      if (servidorComCarro[servidor]) {
+        const veiculo = servidorComCarro[servidor];
         acaoSelect.value = "Retorno";
-        atualizarVeiculos("Retorno");
+        acaoSelect.dispatchEvent(new Event("change"));
         setTimeout(() => {
-          veiculoSelect.value = reg[2];
-          veiculoSelect.dispatchEvent(new Event("change"));
-        }, 200);
+          const opt = [...veiculoSelect.options].find(o => o.value === veiculo);
+          if (opt) {
+            veiculoSelect.value = veiculo;
+            veiculoSelect.dispatchEvent(new Event("change"));
+          }
+        }, 300);
         [...acaoSelect.options].forEach(o => {
           if (o.value === "Saída") o.disabled = true;
         });
@@ -169,14 +165,27 @@
 
     acaoSelect.addEventListener("change", () => {
       const tipo = acaoSelect.value;
-      atualizarVeiculos(tipo);
+      veiculoSelect.innerHTML = `<option value="">Carregando...</option>`;
+      const opcoes = veiculos.filter(v =>
+        (tipo === "Saída" && v.disponivel) ||
+        (tipo === "Retorno" && !v.disponivel) ||
+        (tipo === "Lavação" && v.disponivel)
+      );
+      veiculoSelect.innerHTML = `<option value="">Selecione...</option>`;
+      opcoes.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.nome;
+        opt.textContent = `${v.nome} (${v.saldo})`;
+        veiculoSelect.appendChild(opt);
+      });
+      saldoDiv.textContent = "";
       obsDiv.style.display = (tipo === "Saída" || tipo === "Lavação") ? "block" : "none";
       kmDiv.style.display = tipo === "Retorno" ? "block" : "none";
     });
 
     veiculoSelect.addEventListener("change", () => {
       const v = veiculos.find(v => v.nome === veiculoSelect.value);
-      saldoDiv.textContent = v ? `Saldo: R$ ${parseFloat(v.saldo).toFixed(2).replace(".", ",")}` : "";
+      saldoDiv.textContent = v ? `Saldo: ${v.saldo}` : "";
     });
 
     function enviar() {
@@ -197,20 +206,6 @@
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
-        }
-        const ult = [...registros].reverse().find(r => r[2] === veiculo);
-        if (ult) {
-          const ultKM = parseFloat(ult[3].replace(/\D/g, ""));
-          const kmAtual = parseFloat(km);
-          const diff = kmAtual - ultKM;
-          if (diff < 0) {
-            alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
-            return;
-          }
-          if (diff > 500) {
-            alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
-            return;
-          }
         }
       }
 
@@ -234,7 +229,14 @@
           document.getElementById("observacao").value = "";
           document.getElementById("km").value = "";
           saldoDiv.textContent = "";
-          carregarDados();
+          fetch(WEBAPP_URL + "?getDados=1")
+            .then(r => r.json())
+            .then(d => {
+              servidores = d.servidores;
+              veiculos = d.veiculos;
+              servidorComCarro = d.servidorComCarro || {};
+              preencherServidores();
+            });
         } else {
           feedbackDiv.textContent = "Erro ao enviar.";
           feedbackDiv.style.color = "red";
@@ -244,19 +246,6 @@
         feedbackDiv.style.color = "red";
       });
     }
-
-    function carregarDados() {
-      fetch(WEBAPP_URL + "?getDados=1")
-        .then(r => r.json())
-        .then(d => {
-          servidores = d.servidores;
-          veiculos = d.veiculos;
-          registros = d.registros || [];
-          preencherServidores();
-        });
-    }
-
-    carregarDados();
   </script>
 </body>
 </html>
