@@ -60,6 +60,11 @@
       font-weight: bold;
       margin-top: 10px;
     }
+    #saldo {
+      text-align: right;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -71,9 +76,7 @@
     <h2>Formulário de Registro</h2>
 
     <label for="servidor">Servidor</label>
-    <select id="servidor">
-      <option value="">Carregando...</option>
-    </select>
+    <select id="servidor"><option value="">Carregando...</option></select>
 
     <label for="acao">Tipo de Ação</label>
     <select id="acao">
@@ -84,10 +87,8 @@
     </select>
 
     <label for="veiculo">Veículo</label>
-    <select id="veiculo">
-      <option value="">Selecione a ação primeiro...</option>
-    </select>
-    <div id="saldo" style="text-align:right; font-size:14px; margin-bottom:10px;"></div>
+    <select id="veiculo"><option value="">Selecione a ação primeiro...</option></select>
+    <div id="saldo"></div>
 
     <div id="campoObservacao">
       <label for="observacao">Observação</label>
@@ -145,6 +146,12 @@
           veiculoSelect.value = veiculoDoServidor.nome;
           veiculoSelect.dispatchEvent(new Event("change"));
         }, 100);
+        // Impede alteração de ação
+        [...acaoSelect.options].forEach(opt => {
+          if (opt.value === "Saída") opt.disabled = true;
+        });
+      } else {
+        [...acaoSelect.options].forEach(opt => opt.disabled = false);
       }
     });
 
@@ -178,7 +185,7 @@
       const acao = acaoSelect.value;
       const veiculo = veiculoSelect.value;
       const observacao = document.getElementById("observacao").value;
-      const km = parseFloat(document.getElementById("km").value);
+      const km = document.getElementById("km").value;
 
       if (!servidor || !acao || !veiculo) {
         feedbackDiv.textContent = "Preencha todos os campos obrigatórios.";
@@ -186,21 +193,20 @@
         return;
       }
       if (acao === "Retorno") {
-        const v = veiculos.find(v => v.nome === veiculo);
-        const ultimaKM = parseFloat(v?.ultimoKM || 0);
-        if (isNaN(km)) {
+        if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
         }
-        if (km < ultimaKM) {
-          feedbackDiv.textContent = `KM inválido: menor que o último registrado (${ultimaKM}).`;
-          feedbackDiv.style.color = "red";
+        const veiculoObj = veiculos.find(v => v.nome === veiculo);
+        const ultimaKM = parseFloat(veiculoObj?.ultimaKM || "0");
+        const novaKM = parseFloat(km);
+        if (novaKM < ultimaKM) {
+          alert("Você só andou de ré? A KM tá abaixo da última registrada.\nFavor certifique-se da KM atual do veículo!");
           return;
         }
-        if (km - ultimaKM > 500) {
-          feedbackDiv.textContent = `KM inválido: diferença maior que 500km.`;
-          feedbackDiv.style.color = "red";
+        if (novaKM - ultimaKM > 500) {
+          alert("Por toda Joinville? Você andou mais de 500km só nessa \"saidinha\"?\nCertifique-se da KM registrada.");
           return;
         }
       }
@@ -210,7 +216,7 @@
       data.append("acao", acao);
       data.append("veiculo", veiculo);
       data.append("observacao", observacao);
-      data.append("km", km || "");
+      data.append("km", km);
 
       fetch(WEBAPP_URL, {
         method: "POST",
