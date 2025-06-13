@@ -4,70 +4,74 @@
   <meta charset="UTF-8">
   <title>Controle de Veículos</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #043C64;
-      color: white;
-      text-align: center;
-      padding: 20px 10px;
-    }
-    header img {
-      max-height: 60px;
-      margin-bottom: 10px;
-    }
-    main {
-      max-width: 500px;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #043C64;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
-    }
-    select, input, textarea {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 18px;
-      background-color: #043C64;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    #feedback {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: #999;
-      padding: 10px;
-    }
-  </style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    font-size: 23px;
+  }
+  header {
+    background-color: #043C64;
+    color: white;
+    text-align: center;
+    padding: 30px 15px;
+  }
+  header img {
+    max-height: 87px;
+    margin-bottom: 15px;
+  }
+  main {
+    max-width: 725px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  h2 {
+    text-align: center;
+    color: #043C64;
+    font-size: 28px;
+  }
+  label {
+    font-weight: bold;
+    margin-top: 15px;
+    display: block;
+    font-size: 23px;
+  }
+  select, input, textarea {
+    width: 100%;
+    padding: 14px;
+    font-size: 23px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    box-sizing: border-box;
+  }
+  button {
+    width: 100%;
+    padding: 17px;
+    font-size: 24px;
+    background-color: #043C64;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+  #feedback {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 15px;
+    font-size: 22px;
+  }
+  footer {
+    text-align: center;
+    font-size: 16px;
+    color: #999;
+    padding: 15px;
+  }
+</style>
 </head>
 <body>
   <header>
@@ -108,7 +112,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.02</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.x3</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
