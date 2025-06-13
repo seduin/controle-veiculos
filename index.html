@@ -108,7 +108,8 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.4</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.5</footer>
+
   <script>
     const servidorSelect = document.getElementById("servidor");
     const acaoSelect = document.getElementById("acao");
@@ -123,7 +124,6 @@
     let veiculos = [];
     let registros = [];
     let servidorComCarro = {};
-    let interagiu = false;
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
@@ -163,6 +163,8 @@
         });
       } else {
         [...acaoSelect.options].forEach(o => o.disabled = false);
+        acaoSelect.value = "";
+        veiculoSelect.innerHTML = `<option value="">Selecione a ação primeiro...</option>`;
       }
     });
 
@@ -240,12 +242,12 @@
           feedbackDiv.textContent = "✅ Registro enviado com sucesso!";
           feedbackDiv.style.color = "green";
 
-          interagiu = false;
+          let interagiu = false;
           const resetForm = () => {
             if (!interagiu) {
               servidorSelect.value = "";
               acaoSelect.value = "";
-              veiculoSelect.innerHTML = "";
+              veiculoSelect.innerHTML = "<option value=''>Selecione a ação primeiro...</option>";
               document.getElementById("observacao").value = "";
               document.getElementById("km").value = "";
               saldoDiv.textContent = "";
@@ -257,8 +259,8 @@
             campo.addEventListener("change", () => interagiu = true, { once: true });
           });
 
-          setTimeout(() => { feedbackDiv.textContent = ""; }, 30000);
-          setTimeout(resetForm, 30000);
+          setTimeout(() => { feedbackDiv.textContent = ""; }, 15000);
+          setTimeout(resetForm, 15000);
 
           fetch(WEBAPP_URL + "?getDados=1")
             .then(r => r.json())
