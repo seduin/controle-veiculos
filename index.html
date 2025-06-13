@@ -108,8 +108,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.0</footer>
-
+  <footer>Desenvolvido por Tiago Nielson - v.3.4</footer>
   <script>
     const servidorSelect = document.getElementById("servidor");
     const acaoSelect = document.getElementById("acao");
@@ -124,6 +123,7 @@
     let veiculos = [];
     let registros = [];
     let servidorComCarro = {};
+    let interagiu = false;
 
     fetch(WEBAPP_URL + "?getDados=1")
       .then(r => r.json())
@@ -240,7 +240,7 @@
           feedbackDiv.textContent = "✅ Registro enviado com sucesso!";
           feedbackDiv.style.color = "green";
 
-          let interagiu = false;
+          interagiu = false;
           const resetForm = () => {
             if (!interagiu) {
               servidorSelect.value = "";
