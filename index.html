@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -109,7 +108,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.02</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.0</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
@@ -204,27 +203,24 @@
         feedbackDiv.style.color = "red";
         return;
       }
-
       if (acao === "Retorno") {
         if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
         }
-        const ultRetorno = [...registros].reverse().find(r => r[2] === veiculo && r[1] === "Retorno");
-        if (ultRetorno) {
-          const ultKM = parseFloat(ultRetorno[3].toString().replace(/\D/g, ""));
+        const ult = [...registros].reverse().find(r => r[2] === veiculo);
+        if (ult) {
+          const ultKM = parseFloat(ult[3].replace(/\D/g, ""));
           const kmAtual = parseFloat(km);
           const diff = kmAtual - ultKM;
-          if (isFinite(ultKM) && isFinite(kmAtual)) {
-            if (diff < 0) {
-              alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
-              return;
-            }
-            if (diff > 500) {
-              alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
-              return;
-            }
+          if (diff < 0) {
+            alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
+            return;
+          }
+          if (diff > 500) {
+            alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
+            return;
           }
         }
       }
@@ -243,12 +239,27 @@
         if (res.includes("OK")) {
           feedbackDiv.textContent = "✅ Registro enviado com sucesso!";
           feedbackDiv.style.color = "green";
-          servidorSelect.value = "";
-          acaoSelect.value = "";
-          veiculoSelect.innerHTML = "";
-          document.getElementById("observacao").value = "";
-          document.getElementById("km").value = "";
-          saldoDiv.textContent = "";
+
+          let interagiu = false;
+          const resetForm = () => {
+            if (!interagiu) {
+              servidorSelect.value = "";
+              acaoSelect.value = "";
+              veiculoSelect.innerHTML = "";
+              document.getElementById("observacao").value = "";
+              document.getElementById("km").value = "";
+              saldoDiv.textContent = "";
+              feedbackDiv.textContent = "";
+            }
+          };
+
+          [servidorSelect, acaoSelect, veiculoSelect].forEach(campo => {
+            campo.addEventListener("change", () => interagiu = true, { once: true });
+          });
+
+          setTimeout(() => { feedbackDiv.textContent = ""; }, 30000);
+          setTimeout(resetForm, 30000);
+
           fetch(WEBAPP_URL + "?getDados=1")
             .then(r => r.json())
             .then(d => {
