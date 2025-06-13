@@ -108,7 +108,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.5</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.02</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
@@ -163,8 +163,6 @@
         });
       } else {
         [...acaoSelect.options].forEach(o => o.disabled = false);
-        acaoSelect.value = "";
-        veiculoSelect.innerHTML = `<option value="">Selecione a ação primeiro...</option>`;
       }
     });
 
@@ -205,24 +203,27 @@
         feedbackDiv.style.color = "red";
         return;
       }
+
       if (acao === "Retorno") {
         if (!km) {
           feedbackDiv.textContent = "Informe o KM na volta.";
           feedbackDiv.style.color = "red";
           return;
         }
-        const ult = [...registros].reverse().find(r => r[2] === veiculo);
-        if (ult) {
-          const ultKM = parseFloat(ult[3].replace(/\D/g, ""));
+        const ultRetorno = [...registros].reverse().find(r => r[2] === veiculo && r[1] === "Retorno");
+        if (ultRetorno) {
+          const ultKM = parseFloat(ultRetorno[3].toString().replace(/\D/g, ""));
           const kmAtual = parseFloat(km);
           const diff = kmAtual - ultKM;
-          if (diff < 0) {
-            alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
-            return;
-          }
-          if (diff > 500) {
-            alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
-            return;
+          if (isFinite(ultKM) && isFinite(kmAtual)) {
+            if (diff < 0) {
+              alert("Você só andou de ré? A KM está abaixo da última registrada. Certifique-se da KM atual do veículo!");
+              return;
+            }
+            if (diff > 500) {
+              alert("Por toda Joinville? Você andou mais de 500km só nessa 'saidinha'? Certifique-se da KM atual do veículo!");
+              return;
+            }
           }
         }
       }
@@ -241,27 +242,12 @@
         if (res.includes("OK")) {
           feedbackDiv.textContent = "✅ Registro enviado com sucesso!";
           feedbackDiv.style.color = "green";
-
-          let interagiu = false;
-          const resetForm = () => {
-            if (!interagiu) {
-              servidorSelect.value = "";
-              acaoSelect.value = "";
-              veiculoSelect.innerHTML = "<option value=''>Selecione a ação primeiro...</option>";
-              document.getElementById("observacao").value = "";
-              document.getElementById("km").value = "";
-              saldoDiv.textContent = "";
-              feedbackDiv.textContent = "";
-            }
-          };
-
-          [servidorSelect, acaoSelect, veiculoSelect].forEach(campo => {
-            campo.addEventListener("change", () => interagiu = true, { once: true });
-          });
-
-          setTimeout(() => { feedbackDiv.textContent = ""; }, 15000);
-          setTimeout(resetForm, 15000);
-
+          servidorSelect.value = "";
+          acaoSelect.value = "";
+          veiculoSelect.innerHTML = "";
+          document.getElementById("observacao").value = "";
+          document.getElementById("km").value = "";
+          saldoDiv.textContent = "";
           fetch(WEBAPP_URL + "?getDados=1")
             .then(r => r.json())
             .then(d => {
