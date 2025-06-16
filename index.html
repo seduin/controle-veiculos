@@ -112,7 +112,7 @@
     <button onclick="enviar()">Confirmar</button>
     <div id="feedback"></div>
   </main>
-  <footer>Desenvolvido por Tiago Nielson - v.3.x3</footer>
+  <footer>Desenvolvido por Tiago Nielson - v.3.x4</footer>
 
   <script>
     const servidorSelect = document.getElementById("servidor");
@@ -239,6 +239,14 @@
       data.append("observacao", observacao);
       data.append("km", km);
 
+      console.log("Enviando dados:", {
+      servidor,
+      acao,
+      veiculo,
+      observacao,
+      km
+      });
+      
       fetch(WEBAPP_URL, {
         method: "POST",
         body: data
